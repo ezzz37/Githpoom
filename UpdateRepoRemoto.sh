@@ -164,6 +164,98 @@ ver_ramas() {
   fi
 }
 
+clonar_repositorio() {
+  read -p "Ingresa la URL del repositorio a clonar: " url_repo
+  if [ -z "$url_repo" ]; then
+    echo "Error: La URL del repositorio no puede estar vacia."
+    return 1
+  fi
+  git clone "$url_repo" || { echo "Error: No se pudo clonar el repositorio."; return 1; }
+  echo "Repositorio clonado con exito."
+}
+
+cambiar_rama() {
+  if cambiar_ruta_repositorio; then
+    read -p "Ingresa el nombre de la rama a la que deseas cambiar: " rama_destino
+    if [ -z "$rama_destino" ]; then
+      echo "Error: El nombre de la rama no puede estar vacio."
+      return 1
+    fi
+    git checkout "$rama_destino" || { echo "Error: No se pudo cambiar a la rama '$rama_destino'."; return 1; }
+    echo "Cambiado a la rama '$rama_destino'."
+  fi
+}
+
+fusionar_rama() {
+  if cambiar_ruta_repositorio; then
+    read -p "Ingresa el nombre de la rama que deseas fusionar en la rama actual: " rama_fusionar
+    if [ -z "$rama_fusionar" ]; then
+      echo "Error: El nombre de la rama no puede estar vacio."
+      return 1
+    fi
+    git merge "$rama_fusionar" || { echo "Error: No se pudo fusionar la rama '$rama_fusionar'."; return 1; }
+    echo "Rama '$rama_fusionar' fusionada con exito en la rama actual."
+  fi
+}
+
+revertir_commit() {
+  if cambiar_ruta_repositorio; then
+    read -p "Ingresa el hash del commit que deseas revertir: " hash_commit
+    if [ -z "$hash_commit" ]; then
+      echo "Error: El hash del commit no puede estar vacio."
+      return 1
+    fi
+    git revert "$hash_commit" || { echo "Error: No se pudo revertir el commit '$hash_commit'."; return 1; }
+    echo "Commit '$hash_commit' revertido con exito."
+  fi
+}
+
+ver_historial() {
+  if cambiar_ruta_repositorio; then
+    echo "Historial de commits:"
+    git log --oneline --graph --all || { echo "Error: No se pudo mostrar el historial de commits."; return 1; }
+    read -p "Presiona Enter para continuar..."
+  fi
+}
+
+restaurar_archivo() {
+  if cambiar_ruta_repositorio; then
+    read -p "Ingresa el nombre del archivo que deseas restaurar: " archivo
+    if [ -z "$archivo" ]; then
+      echo "Error: El nombre del archivo no puede estar vacio."
+      return 1
+    fi
+    git restore "$archivo" || { echo "Error: No se pudo restaurar el archivo '$archivo'."; return 1; }
+    echo "Archivo '$archivo' restaurado con exito."
+  fi
+}
+
+#config de usuario y correo en repo remoto
+configurar_usuario() {
+  read -p "Ingresa tu nombre de usuario para Git: " nombre_usuario
+  read -p "Ingresa tu correo electronico para Git: " correo_usuario
+  if [ -z "$nombre_usuario" ] || [ -z "$correo_usuario" ]; then
+    echo "Error: El nombre de usuario y el correo electronico no pueden estar vacios."
+    return 1
+  fi
+  git config --global user.name "$nombre_usuario"
+  git config --global user.email "$correo_usuario"
+  echo "Configuracion de usuario actualizada:"
+  git config --global --list
+}
+
+eliminar_archivos_preparados() {
+  if cambiar_ruta_repositorio; then
+    read -p "Ingresa el nombre del archivo(s) a eliminar del área de preparación (separados por espacios): " archivos
+    if [ -z "$archivos" ]; then
+      echo "Error: El nombre del archivo no puede estar vacio."
+      return 1
+    fi
+    git restore --staged $archivos || { echo "Error: No se pudieron eliminar los archivos del area de preparacion."; return 1; }
+    echo "Archivos eliminados del area de preparación."
+  fi
+}
+
 salir() {
   echo "Saliendo..."
   exit 0
@@ -194,6 +286,14 @@ while true; do
   echo -e "${RED}[ * ] 11. Eliminar rama local y remota${NC}"
   echo -e "${RED}[ * ] 12. Actualizar rama con rebase${NC}"
   echo -e "${RED}[ * ] 13. Ver ramas locales y remotas${NC}"
+  echo -e "${RED}[ * ] 14. Clonar un repositorio${NC}"
+  echo -e "${RED}[ * ] 15. Cambiar de rama${NC}"
+  echo -e "${RED}[ * ] 16. Fusionar ramas${NC}"
+  echo -e "${RED}[ * ] 17. Revertir un commit${NC}"
+  echo -e "${RED}[ * ] 18. Ver historial de commits${NC}"
+  echo -e "${RED}[ * ] 19. Restaurar un archivo${NC}"
+  echo -e "${RED}[ * ] 20. Configurar usuario de Git${NC}"
+  echo -e "${RED}[ * ] 21. Eliminar archivos del área de preparación${NC}"
   echo -e "${RED}[ * ] 0. Salir${NC}"
   echo -e "${RED}====================================================================${NC}"
   read -p "Selecciona una opción: " opcion
@@ -212,6 +312,14 @@ while true; do
     11) eliminar_rama;;
     12) Pull_rama_Con_rebase;;
     13) ver_ramas;;
+    14) clonar_repositorio;;
+    15) cambiar_rama;;
+    16) fusionar_rama;;
+    17) revertir_commit;;
+    18) ver_historial;;
+    19) restaurar_archivo;;
+    20) configurar_usuario;;
+    21) eliminar_archivos_preparados;;
     0) salir;;
     *) echo -e "${RED}Opción inválida${NC}"; read -p "Presiona Enter para continuar...";;
   esac
