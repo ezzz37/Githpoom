@@ -33,7 +33,8 @@ crear_repositorio() {
 agregar_archivos_generales() {
   if cambiar_ruta_repositorio; then
     echo "Agregando todos los archivos..."
-    git add .
+    git add . || { echo "Error: No se pudieron agregar los archivos."; return 1; }
+    echo "Archivos agregados correctamente"
   fi
 }
 
@@ -46,22 +47,39 @@ agregar_archivos_puntuales() {
 
 hacer_commit() {
   if cambiar_ruta_repositorio; then
-    
-	  read -p "Mensaje del commit: " commit_msg
-    git commit -m "$commit_msg"
+    if git diff-index --quiet HEAD --; then
+      echo "No hay cambios para hacer commit."
+      return 1
+    fi
+    read -p "Mensaje del commit: " commit_msg
+    git commit -m "$commit_msg" || { echo "Error: No se pudo realizar el commit."; return 1; }
+    echo "Commit realizado con exito."
   fi
 }
 
 subir_y_sincronizar() {
   if cambiar_ruta_repositorio; then
-    git branch -M master
-    git push -u origin master
+    rama_actual=$(git branch --show-current)
+    if [ -z "$rama_actual" ]; then
+      echo "Error: No se pudo determinar la rama actual."
+      return 1
+    fi
+    echo "Sincronizando la rama '$rama_actual'..."
+    git push -u origin "$rama_actual" || { echo "Error: No se pudo sincronizar la rama '$rama_actual'."; return 1; }
+    echo "Rama '$rama_actual' sincronizada con exito."
   fi
 }
 
 forzar_subida() {
   if cambiar_ruta_repositorio; then
-    git push origin main --force
+    rama_actual=$(git branch --show-current)
+    if [ -z "$rama_actual" ]; then
+      echo "Error: No se pudo determinar la rama actual."
+      return 1
+    fi
+    echo "Forzando la subida de la rama '$rama_actual'..."
+    git push origin "$rama_actual" --force || { echo "Error: No se pudo forzar la subida de la rama '$rama_actual'."; return 1; }
+    echo "Rama '$rama_actual' subida con éxito (forzado)."
   fi
 }
 
