@@ -106,6 +106,19 @@ eliminar_rama() {
   fi
 }
 
+Pull_rama_Con_rebase(){
+  if cambiar_ruta_repositorio; then
+    read -p "Nombre de la rama a actualizar: " rama_actualizar
+    if [ -z "$rama_actualizar" ]; then
+      echo "Error: El nombre de la rama no puede estar vacío."
+      return 1
+    fi
+    git checkout "$rama_actualizar"
+    git pull --rebase origin "$rama_actualizar"
+    echo "Rama '$rama_actualizar' actualizada con rebase."
+  fi
+}
+
 salir() {
   echo "Saliendo..."
   exit 0
@@ -134,7 +147,8 @@ while true; do
   echo -e "${RED}[ * ] 9. Ver estado detallado del repositorio${NC}"
   echo -e "${RED}[ * ] 10. Crear rama local y remota${NC}"
   echo -e "${RED}[ * ] 11. Eliminar rama local y remota${NC}"
-  echo -e "${RED}[ * ] 12. Salir${NC}"
+  echo -e "${RED}[ * ] 12. Actualizar rama con rebase${NC}"
+  echo -e "${RED}[ * ] 0. Salir${NC}"
   echo -e "${RED}====================================================================${NC}"
   read -p "Selecciona una opción: " opcion
 
@@ -150,7 +164,8 @@ while true; do
     9) ver_estado_detallado;;
     10) crear_rama;;
     11) eliminar_rama;;
-    12) salir;;
+    12) Pull_rama_Con_rebase;;
+    0) salir;;
     *) echo -e "${RED}Opción inválida${NC}"; read -p "Presiona Enter para continuar...";;
   esac
 done
