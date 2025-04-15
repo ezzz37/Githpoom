@@ -1,10 +1,8 @@
 #!/bin/bash
 
-# Colores
 RED='\033[0;31m'
-NC='\033[0m' # Sin color
+NC='\033[0m'
 
-# Función para solicitar la ruta del repositorio y cambiar a esa ruta
 cambiar_ruta_repositorio() {
   read -p "Ingresa la ruta relativa o absoluta del repositorio: " ruta_repo
   if [ -d "$ruta_repo" ]; then
