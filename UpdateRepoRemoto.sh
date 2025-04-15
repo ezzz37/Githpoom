@@ -135,6 +135,17 @@ Pull_rama_Con_rebase(){
   fi
 }
 
+ver_ramas() {
+  if cambiar_ruta_repositorio; then
+    echo "Ramas locales:"
+    git branch
+    echo ""
+    echo "Ramas remotas:"
+    git branch -r
+    read -p "Presiona Enter para continuar..."
+  fi
+}
+
 salir() {
   echo "Saliendo..."
   exit 0
@@ -163,7 +174,8 @@ while true; do
   echo -e "${RED}[ * ] 9. Ver estado detallado del repositorio${NC}"
   echo -e "${RED}[ * ] 10. Crear rama local y remota${NC}"
   echo -e "${RED}[ * ] 11. Eliminar rama local y remota${NC}"
-  echo -e "${RED}[ * ] 12. Actualizar rama con rebase${NC}"  
+  echo -e "${RED}[ * ] 12. Actualizar rama con rebase${NC}"
+  echo -e "${RED}[ * ] 13. Ver ramas locales y remotas${NC}"
   echo -e "${RED}[ * ] 0. Salir${NC}"
   echo -e "${RED}====================================================================${NC}"
   read -p "Selecciona una opción: " opcion
@@ -181,6 +193,7 @@ while true; do
     10) crear_rama;;
     11) eliminar_rama;;
     12) Pull_rama_Con_rebase;;
+    13) ver_ramas;;
     0) salir;;
     *) echo -e "${RED}Opción inválida${NC}"; read -p "Presiona Enter para continuar...";;
   esac
