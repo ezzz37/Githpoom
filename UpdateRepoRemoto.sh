@@ -46,15 +46,16 @@ agregar_archivos_puntuales() {
 
 hacer_commit() {
   if cambiar_ruta_repositorio; then
-    read -p "Mensaje del commit: " commit_msg
+    
+	  read -p "Mensaje del commit: " commit_msg
     git commit -m "$commit_msg"
   fi
 }
 
 subir_y_sincronizar() {
   if cambiar_ruta_repositorio; then
-    git branch -M main
-    git push -u origin main
+    git branch -M master
+    git push -u origin master
   fi
 }
 
@@ -82,6 +83,10 @@ ver_estado_detallado() {
 crear_rama() {
   if cambiar_ruta_repositorio; then
     read -p "Nombre de la nueva rama: " nueva_rama
+    if [ -z "$nueva_rama" ]; then
+      echo "Error: El nombre de la rama no puede estar vacío."
+      return 1
+    fi
     git checkout -b "$nueva_rama"
     git push -u origin "$nueva_rama"
     echo "Rama '$nueva_rama' creada local y remotamente."
@@ -91,8 +96,12 @@ crear_rama() {
 eliminar_rama() {
   if cambiar_ruta_repositorio; then
     read -p "Nombre de la rama a eliminar: " rama_eliminar
-    git branch -d "$rama_eliminar" || echo "Error al eliminar la rama local. Puede que no esté fusionada."
-    git push origin --delete "$rama_eliminar" || echo "Error al eliminar la rama remota."
+    if [ -z "$rama_eliminar" ]; then
+      echo "Error: El nombre de la rama no puede estar vacío."
+      return 1
+    fi
+    git branch -d "$rama_eliminar" || echo "Error: No se pudo eliminar la rama local. Puede que no esté fusionada."
+    git push origin --delete "$rama_eliminar" || echo "Error: No se pudo eliminar la rama remota. Verifique si existe."
     echo "Rama '$rama_eliminar' eliminada local y remotamente."
   fi
 }
