@@ -84,7 +84,7 @@ crear_rama() {
   if cambiar_ruta_repositorio; then
     read -p "Nombre de la nueva rama: " nueva_rama
     if [ -z "$nueva_rama" ]; then
-      echo "Error: El nombre de la rama no puede estar vacío."
+      echo "Error: El nombre de la rama no puede estar vacio."
       return 1
     fi
     git checkout -b "$nueva_rama"
@@ -97,12 +97,28 @@ eliminar_rama() {
   if cambiar_ruta_repositorio; then
     read -p "Nombre de la rama a eliminar: " rama_eliminar
     if [ -z "$rama_eliminar" ]; then
-      echo "Error: El nombre de la rama no puede estar vacío."
+      echo "Error: El nombre de la rama no puede estar vacio."
       return 1
     fi
-    git branch -d "$rama_eliminar" || echo "Error: No se pudo eliminar la rama local. Puede que no esté fusionada."
-    git push origin --delete "$rama_eliminar" || echo "Error: No se pudo eliminar la rama remota. Verifique si existe."
-    echo "Rama '$rama_eliminar' eliminada local y remotamente."
+
+    rama_actual=$(git branch --show-current)
+    if [ "$rama_actual" == "$rama_eliminar" ]; then
+      echo "La rama '$rama_eliminar' esta actualmente activa. Cambiando a otra rama..."
+      git checkout master 2>/dev/null || git checkout main 2>/dev/null || {
+        echo "Error: No se pudo cambiar a otra rama. Asegurate de que 'master' o 'main' existan."
+        return 1
+      }
+    fi
+
+    git branch -D "$rama_eliminar" && echo "Rama local '$rama_eliminar' eliminada." || {
+      echo "Error: No se pudo eliminar la rama local '$rama_eliminar'."
+      return 1
+    }
+
+    git push origin --delete "$rama_eliminar" && echo "Rama remota '$rama_eliminar' eliminada." || {
+      echo "Error: No se pudo eliminar la rama remota '$rama_eliminar'. Verifica si existe."
+      return 1
+    }
   fi
 }
 
@@ -147,7 +163,7 @@ while true; do
   echo -e "${RED}[ * ] 9. Ver estado detallado del repositorio${NC}"
   echo -e "${RED}[ * ] 10. Crear rama local y remota${NC}"
   echo -e "${RED}[ * ] 11. Eliminar rama local y remota${NC}"
-  echo -e "${RED}[ * ] 12. Actualizar rama con rebase${NC}"
+  echo -e "${RED}[ * ] 12. Actualizar rama con rebase${NC}"  
   echo -e "${RED}[ * ] 0. Salir${NC}"
   echo -e "${RED}====================================================================${NC}"
   read -p "Selecciona una opción: " opcion
