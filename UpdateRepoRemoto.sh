@@ -337,7 +337,123 @@ ver_estadisticas() {
   fi
 }
 
+guardar_cambios_stash() {
+  if cambiar_ruta_repositorio; then
+    read -p "Ingresa un mensaje para el stash (opcional): " mensaje_stash
+    if [ -z "$mensaje_stash" ]; then
+      git stash || { echo "Error: No se pudieron guardar los cambios en el stash."; return 1; }
+    else
+      git stash push -m "$mensaje_stash" || { echo "Error: No se pudieron guardar los cambios en el stash."; return 1; }
+    fi
+    echo "Cambios guardados en el stash."
+  fi
+}
 
+aplicar_cambios_stash() {
+  if cambiar_ruta_repositorio; then
+    git stash list
+    read -p "Ingresa el Indice del stash a aplicar (o deja vacío para el Ultimo): " indice_stash
+    if [ -z "$indice_stash" ]; then
+      git stash apply || { echo "Error: No se pudieron aplicar los cambios del stash."; return 1; }
+    else
+      git stash apply "stash@{$indice_stash}" || { echo "Error: No se pudieron aplicar los cambios del stash."; return 1; }
+    fi
+    echo "Cambios aplicados desde el stash."
+  fi
+}
+
+aplicar_cambios_stash() {
+  if cambiar_ruta_repositorio; then
+    git stash list
+    read -p "Ingresa el indice del stash a aplicar (o deja vacIo para el ultimo): " indice_stash
+    if [ -z "$indice_stash" ]; then
+      git stash apply || { echo "Error: No se pudieron aplicar los cambios del stash."; return 1; }
+    else
+      git stash apply "stash@{$indice_stash}" || { echo "Error: No se pudieron aplicar los cambios del stash."; return 1; }
+    fi
+    echo "Cambios aplicados desde el stash."
+  fi
+}
+
+eliminar_stash() {
+  if cambiar_ruta_repositorio; then
+    git stash list
+    read -p "Ingresa el indice del stash a eliminar (o escribe 'all' para eliminar todos): " indice_stash
+    if [ "$indice_stash" == "all" ]; then
+      git stash clear || { echo "Error: No se pudieron eliminar los stashes."; return 1; }
+      echo "Todos los stashes han sido eliminados."
+    else
+      git stash drop "stash@{$indice_stash}" || { echo "Error: No se pudo eliminar el stash."; return 1; }
+      echo "Stash eliminado."
+    fi
+  fi
+}
+
+reescribir_ultimo_commit() {
+  if cambiar_ruta_repositorio; then
+    read -p "Ingresa el nuevo mensaje para el último commit: " nuevo_mensaje
+    if [ -z "$nuevo_mensaje" ]; then
+      echo "Error: El mensaje no puede estar vacio."
+      return 1
+    fi
+    git commit --amend -m "$nuevo_mensaje" || { echo "Error: No se pudo reescribir el ultimo commit."; return 1; }
+    git push --force || { echo "Error: No se pudo sincronizar el commit reescrito."; return 1; }
+    echo "ultimo commit reescrito con éxito."
+  fi
+}
+
+buscar_en_historial() {
+  if cambiar_ruta_repositorio; then
+    read -p "Ingresa el termino a buscar en el historial de commits: " termino_busqueda
+    if [ -z "$termino_busqueda" ]; then
+      echo "Error: El termino de búsqueda no puede estar vacio."
+      return 1
+    fi
+    git log --all --grep="$termino_busqueda" || { echo "Error: No se encontraron coincidencias."; return 1; }
+  fi
+}
+
+ver_archivos_modificados() {
+  if cambiar_ruta_repositorio; then
+    read -p "Ingresa el hash del commit para ver los archivos modificados: " hash_commit
+    if [ -z "$hash_commit" ]; then
+      echo "Error: El hash del commit no puede estar vacio."
+      return 1
+    fi
+    git show --name-only --oneline "$hash_commit" || { echo "Error: No se pudieron mostrar los archivos modificados."; return 1; }
+  fi
+}
+
+crear_tag() {
+  if cambiar_ruta_repositorio; then
+    read -p "Ingresa el nombre del tag: " nombre_tag
+    read -p "Ingresa un mensaje para el tag (opcional): " mensaje_tag
+    if [ -z "$nombre_tag" ]; then
+      echo "Error: El nombre del tag no puede estar vacio."
+      return 1
+    fi
+    if [ -z "$mensaje_tag" ]; then
+      git tag "$nombre_tag" || { echo "Error: No se pudo crear el tag."; return 1; }
+    else
+      git tag -a "$nombre_tag" -m "$mensaje_tag" || { echo "Error: No se pudo crear el tag."; return 1; }
+    fi
+    git push origin "$nombre_tag" || { echo "Error: No se pudo sincronizar el tag."; return 1; }
+    echo "Tag '$nombre_tag' creado y sincronizado con exito."
+  fi
+}
+
+eliminar_tag() {
+  if cambiar_ruta_repositorio; then
+    read -p "Ingresa el nombre del tag a eliminar: " nombre_tag
+    if [ -z "$nombre_tag" ]; then
+      echo "Error: El nombre del tag no puede estar vacio."
+      return 1
+    fi
+    git tag -d "$nombre_tag" || { echo "Error: No se pudo eliminar el tag local."; return 1; }
+    git push origin --delete "$nombre_tag" || { echo "Error: No se pudo eliminar el tag remoto."; return 1; }
+    echo "Tag '$nombre_tag' eliminado local y remotamente."
+  fi
+}
 
 salir() {
   echo "Saliendo..."
@@ -384,6 +500,14 @@ while true; do
   echo -e "${RED}[ * ] 26. Limpiar archivos no rastreados${NC}"
   echo -e "${RED}[ * ] 27. Cambiar URL del repositorio remoto${NC}"
   echo -e "${RED}[ * ] 28. Ver estadísticas del repositorio${NC}"
+  echo -e "${RED}[ * ] 29. Guardar cambios en stash${NC}"
+  echo -e "${RED}[ * ] 30. Aplicar cambios desde stash${NC}"
+  echo -e "${RED}[ * ] 31. Eliminar stash${NC}"
+  echo -e "${RED}[ * ] 32. Reescribir último commit${NC}"
+  echo -e "${RED}[ * ] 33. Buscar en historial de commits${NC}"
+  echo -e "${RED}[ * ] 34. Ver archivos modificados en un commit${NC}"
+  echo -e "${RED}[ * ] 35. Crear un tag${NC}"
+  echo -e "${RED}[ * ] 36. Eliminar un tag${NC}"
   echo -e "${RED}[ * ] 0. Salir${NC}"
   echo -e "${RED}====================================================================${NC}"
   read -p "Selecciona una opcion: " opcion
@@ -417,6 +541,14 @@ while true; do
     26) limpiar_archivos_no_rastreados;;
     27) cambiar_url_remota;;
     28) ver_estadisticas;;
+    29) guardar_cambios_stash;;
+    30) aplicar_cambios_stash;;
+    31) eliminar_stash;;
+    32) reescribir_ultimo_commit;;
+    33) buscar_en_historial;;
+    34) ver_archivos_modificados;;
+    35) crear_tag;;
+    36) eliminar_tag;;
     0) salir;;
     *) echo -e "${RED}Opción invalida${NC}"; read -p "Presiona Enter para continuar...";;
   esac
