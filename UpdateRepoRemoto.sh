@@ -10,7 +10,7 @@ cambiar_ruta_repositorio() {
     echo "Ahora estás en el repositorio: $ruta_repo"
     return 0
   else
-    echo "Error: La ruta ingresada no es válida."
+    echo "Error: La ruta ingresada no es valida."
     return 1
   fi
 }
@@ -144,7 +144,7 @@ Pull_rama_Con_rebase(){
   if cambiar_ruta_repositorio; then
     read -p "Nombre de la rama a actualizar: " rama_actualizar
     if [ -z "$rama_actualizar" ]; then
-      echo "Error: El nombre de la rama no puede estar vacío."
+      echo "Error: El nombre de la rama no puede estar vacio."
       return 1
     fi
     git checkout "$rama_actualizar"
@@ -246,15 +246,98 @@ configurar_usuario() {
 
 eliminar_archivos_preparados() {
   if cambiar_ruta_repositorio; then
-    read -p "Ingresa el nombre del archivo(s) a eliminar del área de preparación (separados por espacios): " archivos
+    read -p "Ingresa el nombre del archivo(s) a eliminar del area de preparacion (separados por espacios): " archivos
     if [ -z "$archivos" ]; then
       echo "Error: El nombre del archivo no puede estar vacio."
       return 1
     fi
     git restore --staged $archivos || { echo "Error: No se pudieron eliminar los archivos del area de preparacion."; return 1; }
-    echo "Archivos eliminados del area de preparación."
+    echo "Archivos eliminados del area de preparacion."
   fi
 }
+
+reiniciar_repositorio() {
+  if cambiar_ruta_repositorio; then
+    read -p "Ingresa el hash del commit al que deseas reiniciar (o deja vacío para HEAD): " hash_commit
+    if [ -z "$hash_commit" ]; then
+      hash_commit="HEAD"
+    fi
+    git reset --hard "$hash_commit" || { echo "Error: No se pudo reiniciar el repositorio."; return 1; }
+    echo "Repositorio reiniciado al estado del commit '$hash_commit'."
+  fi
+}
+
+eliminar_archivo() {
+  if cambiar_ruta_repositorio; then
+    read -p "Ingresa el nombre del archivo a eliminar: " archivo
+    if [ -z "$archivo" ]; then
+      echo "Error: El nombre del archivo no puede estar vacío."
+      return 1
+    fi
+    git rm "$archivo" || { echo "Error: No se pudo eliminar el archivo '$archivo'."; return 1; }
+    git commit -m "Eliminado archivo '$archivo'" || { echo "Error: No se pudo realizar el commit."; return 1; }
+    git push || { echo "Error: No se pudo sincronizar los cambios."; return 1; }
+    echo "Archivo '$archivo' eliminado del repositorio local y remoto."
+  fi
+}
+
+ver_diferencias() {
+  if cambiar_ruta_repositorio; then
+    read -p "Ingresa el hash del primer commit: " commit1
+    read -p "Ingresa el hash del segundo commit: " commit2
+    if [ -z "$commit1" ] || [ -z "$commit2" ]; then
+      echo "Error: Ambos hashes de commits son necesarios."
+      return 1
+    fi
+    git diff "$commit1" "$commit2" || { echo "Error: No se pudieron mostrar las diferencias."; return 1; }
+  fi
+}
+
+configurar_gitignore() {
+  if cambiar_ruta_repositorio; then
+    echo "Editando el archivo .gitignore..."
+    nano .gitignore || { echo "Error: No se pudo abrir el editor."; return 1; }
+    git add .gitignore
+    git commit -m "Actualizado archivo .gitignore" || { echo "Error: No se pudo realizar el commit."; return 1; }
+    git push || { echo "Error: No se pudo sincronizar los cambios."; return 1; }
+    echo "Archivo .gitignore configurado y sincronizado."
+  fi
+}
+
+limpiar_archivos_no_rastreados() {
+  if cambiar_ruta_repositorio; then
+    echo "Eliminando archivos no rastreados..."
+    git clean -f || { echo "Error: No se pudieron eliminar los archivos no rastreados."; return 1; }
+    echo "Archivos no rastreados eliminados."
+  fi
+}
+
+cambiar_url_remota() {
+  if cambiar_ruta_repositorio; then
+    read -p "Ingresa la nueva URL del repositorio remoto: " nueva_url
+    if [ -z "$nueva_url" ]; then
+      echo "Error: La URL no puede estar vacia."
+      return 1
+    fi
+    git remote set-url origin "$nueva_url" || { echo "Error: No se pudo cambiar la URL remota."; return 1; }
+    echo "URL remota cambiada a '$nueva_url'."
+  fi
+}
+
+ver_estadisticas() {
+  if cambiar_ruta_repositorio; then
+    echo "Estadisticas del repositorio:"
+    echo "Numero de commits:"
+    git rev-list --count HEAD
+    echo "Numero de ramas:"
+    git branch | wc -l
+    echo "Autores:"
+    git shortlog -sn
+    read -p "Presiona Enter para continuar..."
+  fi
+}
+
+
 
 salir() {
   echo "Saliendo..."
@@ -294,9 +377,16 @@ while true; do
   echo -e "${RED}[ * ] 19. Restaurar un archivo${NC}"
   echo -e "${RED}[ * ] 20. Configurar usuario de Git${NC}"
   echo -e "${RED}[ * ] 21. Eliminar archivos del área de preparación${NC}"
+  echo -e "${RED}[ * ] 22. Reiniciar repositorio${NC}"
+  echo -e "${RED}[ * ] 23. Eliminar un archivo del repositorio${NC}"
+  echo -e "${RED}[ * ] 24. Ver diferencias entre commits${NC}"
+  echo -e "${RED}[ * ] 25. Configurar archivo .gitignore${NC}"
+  echo -e "${RED}[ * ] 26. Limpiar archivos no rastreados${NC}"
+  echo -e "${RED}[ * ] 27. Cambiar URL del repositorio remoto${NC}"
+  echo -e "${RED}[ * ] 28. Ver estadísticas del repositorio${NC}"
   echo -e "${RED}[ * ] 0. Salir${NC}"
   echo -e "${RED}====================================================================${NC}"
-  read -p "Selecciona una opción: " opcion
+  read -p "Selecciona una opcion: " opcion
 
   case $opcion in
     1) autenticar_git;;
@@ -320,7 +410,14 @@ while true; do
     19) restaurar_archivo;;
     20) configurar_usuario;;
     21) eliminar_archivos_preparados;;
+    22) reiniciar_repositorio;;
+    23) eliminar_archivo;;
+    24) ver_diferencias;;
+    25) configurar_gitignore;;
+    26) limpiar_archivos_no_rastreados;;
+    27) cambiar_url_remota;;
+    28) ver_estadisticas;;
     0) salir;;
-    *) echo -e "${RED}Opción inválida${NC}"; read -p "Presiona Enter para continuar...";;
+    *) echo -e "${RED}Opción invalida${NC}"; read -p "Presiona Enter para continuar...";;
   esac
 done
